@@ -81,6 +81,40 @@ void test_parameters_before_the_question_mark_are_accepted() {
     TW_CHECK_EQ(without.language, QStringLiteral("logo"));
 }
 
+void test_theme_plus_is_a_space() {
+    const DeepLink plus = parseDeepLink(QStringLiteral("?theme=amber+monochrome"));
+    const DeepLink percent =
+        parseDeepLink(QStringLiteral("?theme=Amber%20Monochrome"));
+    TW_CHECK_EQ(plus.theme, QStringLiteral("Amber Monochrome"));
+    TW_CHECK_EQ(percent.theme, QStringLiteral("Amber Monochrome"));
+    TW_CHECK(!plus.isEmpty());
+}
+
+void test_theme_does_not_corrupt_base64_code() {
+    // Standard-alphabet base64 contains `+`; only `theme` may read `+` as a
+    // space. "12" is 0x31 0x32 -> "MTI=" in standard base64 has no `+`, so use a
+    // source whose encoding does: bytes 0xFB 0xFF base64 is "+/8=".
+    const QByteArray source = QByteArray::fromHex("fbff");
+    const QString standard = QString::fromLatin1(source.toBase64());
+    const DeepLink link = parseDeepLink(QStringLiteral("lang=apl&code=") + standard);
+    TW_CHECK_EQ(link.source, QString::fromUtf8(source));
+}
+
+void test_machine_is_lowercased() {
+    const DeepLink link = parseDeepLink(QStringLiteral("?machine=HB1"));
+    TW_CHECK_EQ(link.machine, QStringLiteral("hb1"));
+    TW_CHECK(!link.isEmpty());
+}
+
+void test_autorun_is_a_run_spelling() {
+    const DeepLink autorun = parseDeepLink(QStringLiteral("?example=logo%2Fmandala.logo&autorun=1"));
+    TW_CHECK(autorun.run);
+    const DeepLink run = parseDeepLink(QStringLiteral("?example=logo%2Fmandala.logo&run=1"));
+    TW_CHECK(run.run);
+    const DeepLink neither = parseDeepLink(QStringLiteral("?example=logo%2Fmandala.logo"));
+    TW_CHECK(!neither.run);
+}
+
 }  // namespace
 
 int main() {
@@ -92,5 +126,9 @@ int main() {
     test_code_without_language_is_ignored();
     test_notebook_and_run();
     test_parameters_before_the_question_mark_are_accepted();
+    test_theme_plus_is_a_space();
+    test_theme_does_not_corrupt_base64_code();
+    test_machine_is_lowercased();
+    test_autorun_is_a_run_spelling();
     return tw::test::summary("deeplink");
 }

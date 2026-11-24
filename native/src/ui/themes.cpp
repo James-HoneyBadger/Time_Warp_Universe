@@ -39,6 +39,16 @@ const std::vector<Theme>& all() {
 
 QString defaultName() { return QString::fromUtf8(at(0).name); }
 
+QString canonicalName(const QString& name) {
+    for (const Theme& theme : all()) {
+        const QString candidate = QString::fromUtf8(theme.name);
+        if (candidate.compare(name, Qt::CaseInsensitive) == 0) {
+            return candidate;
+        }
+    }
+    return {};
+}
+
 const Theme& byName(const QString& name) {
     for (const Theme& theme : all()) {
         if (name == QLatin1String(theme.name)) {

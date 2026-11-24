@@ -362,9 +362,12 @@ public:
     // surface. It is persisted as `appearance/theme`, so the choice survives a
     // restart -- which is the difference between a setting and a demonstration.
 
-    /// Applies `name` and records it. A name this build does not have falls back
-    /// to the default rather than leaving the window half themed.
-    void applyTheme(const QString& name);
+    /// Applies `name`. A name this build does not have falls back to the default
+    /// rather than leaving the window half themed. When `persist` is false the
+    /// choice is not written to settings, which is what a `--screenshot --theme`
+    /// run wants: the picture is reproducible from the command line without the
+    /// developer's own theme being overwritten.
+    void applyTheme(const QString& name, bool persist = true);
     /// The theme currently applied.
     [[nodiscard]] QString currentThemeName() const { return theme_name_; }
     /// The next theme in the table, wrapping. What Shift+F10 does.

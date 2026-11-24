@@ -130,6 +130,12 @@ struct Colours {
 /// Python defaulted to as well.
 [[nodiscard]] QString defaultName();
 
+/// The table's spelling of `name`, matched case-insensitively; empty when no
+/// theme answers to that name. The command line and the browser deep link use it
+/// to accept `amber monochrome` for "Amber Monochrome" and to report a name that
+/// matches nothing rather than silently falling back to the default.
+[[nodiscard]] QString canonicalName(const QString& name);
+
 /// `name`'s theme, or the default when the name is not one of the 33. An unknown
 /// name is a stale settings value rather than a programming error, so it must
 /// not be fatal -- and it must not leave the window half-themed either.

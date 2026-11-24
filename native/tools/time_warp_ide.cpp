@@ -34,6 +34,7 @@
 #include "timewarp/ui/deeplink.hpp"
 #include "timewarp/ui/main_window.hpp"
 #include "timewarp/ui/standalone.hpp"
+#include "timewarp/ui/themes.hpp"
 #include "timewarp/ui/turtle_canvas.hpp"
 #include "timewarp/ui/wasm_deeplink.hpp"
 #include "timewarp/ui/wasm_storage.hpp"
@@ -148,6 +149,16 @@ int main(int argc, char* argv[]) {
         QStringLiteral("name")};
     parser.addOption(panelOption);
 
+    const QCommandLineOption themeOption{
+        QStringLiteral("theme"),
+        QStringLiteral("Apply a theme by name for this session (for example "
+                       "\"Amber Monochrome\"). A name this build does not have is "
+                       "reported rather than silently ignored. Not written to "
+                       "settings, so a screenshot run does not change the theme "
+                       "the next interactive launch uses."),
+        QStringLiteral("name")};
+    parser.addOption(themeOption);
+
     const QCommandLineOption runOption{
         QStringLiteral("run"),
         QStringLiteral("Run the first file as soon as the window is up.")};
@@ -256,6 +267,23 @@ int main(int argc, char* argv[]) {
     const bool haveDeepLink = !deepLink.isEmpty();
 
     timewarp::ui::MainWindow window;
+    if (parser.isSet(themeOption)) {
+        // Before `restoreLayout()` and `show()`, the same reason the saved theme
+        // is applied in the constructor: a palette applied to a visible window
+        // repaints it as a flash of the default colours.
+        const QString canonical =
+            timewarp::ui::themes::canonicalName(parser.value(themeOption));
+        if (canonical.isEmpty()) {
+            std::fprintf(stderr,
+                         "time_warp_ide: no theme is called \"%s\"; the "
+                         "build's themes are listed in the View menu\n",
+                         qPrintable(parser.value(themeOption)));
+            return 2;
+        }
+        // Applied but not persisted: a screenshot must be reproducible from the
+        // command line without overwriting the theme the next launch uses.
+        window.applyTheme(canonical, false);
+    }
     // Always before `show()`: restoring onto a visible window lets Qt re-fit the
     // geometry to the screen, so the saved position is lost on a display smaller
     // than the one it was saved on.

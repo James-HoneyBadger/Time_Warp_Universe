@@ -113,7 +113,7 @@ void MainWindow::buildThemeMenu(QMenu* view) {
     connect(next, &QAction::triggered, this, [this] { cycleTheme(); });
 }
 
-void MainWindow::applyTheme(const QString& name) {
+void MainWindow::applyTheme(const QString& name, bool persist) {
     const Theme& theme = themes::byName(name);
     theme_name_ = QString::fromUtf8(theme.name);
 
@@ -140,7 +140,9 @@ void MainWindow::applyTheme(const QString& name) {
         }
     }
 
-    QSettings{}.setValue(kSettingTheme, theme_name_);
+    if (persist) {
+        QSettings{}.setValue(kSettingTheme, theme_name_);
+    }
     applyThemeToWidgets();
 }
 

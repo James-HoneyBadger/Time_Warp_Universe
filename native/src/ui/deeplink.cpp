@@ -46,7 +46,7 @@ QString parameterOf(const QStringList& pairs, const QString& name) {
 
 bool DeepLink::isEmpty() const {
     return example.isEmpty() && language.isEmpty() && source.isEmpty() &&
-           notebook.isEmpty() && !run;
+           notebook.isEmpty() && theme.isEmpty() && machine.isEmpty() && !run;
 }
 
 DeepLink parseDeepLink(const QString& rawQuery) {
@@ -84,9 +84,31 @@ DeepLink parseDeepLink(const QString& rawQuery) {
         link.notebook = notebook;
     }
 
+    const QString theme = parameterOf(pairs, QStringLiteral("theme"));
+    if (!theme.isEmpty()) {
+        // A theme name has spaces, and a query string writes a space as either
+        // `%20` (decoded above) or `+`. Only this field normalises `+`: the
+        // base64 `code` field uses `+` in its standard alphabet, so a global
+        // replacement would corrupt a shared program.
+        QString name = theme;
+        link.theme = name.replace(QLatin1Char('+'), QLatin1Char(' '));
+    }
+
+    const QString machine = parameterOf(pairs, QStringLiteral("machine"));
+    if (!machine.isEmpty()) {
+        link.machine = machine.toLower();
+    }
+
+    // `run=1` is the canonical spelling; `autorun=1` is accepted because the
+    // guides have used both words, and a link that matches the word a reader
+    // expected must not quietly refuse to run.
     const QString run = parameterOf(pairs, QStringLiteral("run"));
-    link.run = run == QLatin1String("1") || run.compare(QLatin1String("true"),
-                                                        Qt::CaseInsensitive) == 0;
+    const QString autorun = parameterOf(pairs, QStringLiteral("autorun"));
+    const auto isTrue = [](const QString& value) {
+        return value == QLatin1String("1") ||
+               value.compare(QLatin1String("true"), Qt::CaseInsensitive) == 0;
+    };
+    link.run = isTrue(run) || isTrue(autorun);
 
     return link;
 }

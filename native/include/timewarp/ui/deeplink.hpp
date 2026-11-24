@@ -10,6 +10,12 @@
 //   ?lang=apl&code=<url-safe base64>  open a shared program in that language
 //   ?notebook=<url>                   open a `.twnb` notebook fetched from a URL
 //   ?run=1                            run whatever the link opened
+//   ?theme=amber+monochrome           apply a theme (URL-decoded, hyphenated)
+//   ?machine=hb1|chip8|hb2            ask for a virtual machine
+//
+// `autorun=1` is accepted as a spelling of `run=1`: the two words have been used
+// interchangeably in the prose, and a link that names the one a reader expected
+// must not quietly refuse to run.
 //
 // `code` is base64 with the URL-safe alphabet (`-` and `_` instead of `+` and
 // `/`) and no padding, so the link survives a paste into a document and an email
@@ -38,7 +44,15 @@ struct DeepLink {
     QString source;
     /// The URL of a `.twnb` notebook to fetch. Empty when the link is not one.
     QString notebook;
-    /// `?run=1`: run the opened document once the window is up.
+    /// A theme name from the theme table, hyphenated as the link writes it, e.g.
+    /// `amber+monochrome`. Empty when the link did not name one.
+    QString theme;
+    /// A virtual machine key: `hb1`, `chip8` or `hb2`. Empty when the link did
+    /// not ask for one. Parsed so a link can be read and reported on any build;
+    /// the machines are separate desktop applications, so the browser build
+    /// reports that it cannot start one rather than pretending it did.
+    QString machine;
+    /// `?run=1` (or `?autorun=1`): run the opened document once the window is up.
     bool run = false;
 
     /// Whether the link asks for anything at all.

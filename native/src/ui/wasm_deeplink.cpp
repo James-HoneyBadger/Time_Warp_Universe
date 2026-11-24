@@ -16,6 +16,7 @@
 #include "timewarp/ui/main_window.hpp"
 #include "timewarp/ui/notebook.hpp"
 #include "timewarp/ui/notebook_window.hpp"
+#include "timewarp/ui/themes.hpp"
 
 #include <QBuffer>
 #include <QCoreApplication>
@@ -166,7 +167,7 @@ bool applyDeepLink(MainWindow* window, const DeepLink& link, QString* error) {
                 parseError = buffer.errorString();
             } else {
                 const Notebook notebook = readNotebook(buffer, &parseError);
-                if (!parseError.isEmpty()) {
+                if (parseError.isEmpty()) {
                     auto* window_ = new NotebookWindow{};
                     window_->setAttribute(Qt::WA_DeleteOnClose);
                     window_->setNotebook(notebook);
@@ -177,6 +178,32 @@ bool applyDeepLink(MainWindow* window, const DeepLink& link, QString* error) {
             if (!parseError.isEmpty() && error != nullptr) {
                 *error = parseError;
             }
+        }
+    }
+
+    if (!link.theme.isEmpty()) {
+        const QString name = themes::canonicalName(link.theme);
+        if (name.isEmpty()) {
+            if (error != nullptr) {
+                *error = QCoreApplication::translate(
+                    "wasm_deeplink", "the link named an unknown theme: %1")
+                             .arg(link.theme);
+            }
+        } else {
+            window->applyTheme(name);
+        }
+    }
+
+    if (!link.machine.isEmpty()) {
+        // The machines are separate desktop executables, not windows of the
+        // browser build, and there is nothing to start them from. The link is
+        // understood; it is the build that cannot honour it.
+        if (error != nullptr) {
+            *error = QCoreApplication::translate(
+                "wasm_deeplink",
+                "the link asked for the %1 machine, which is a desktop "
+                "application and not part of the browser build")
+                         .arg(link.machine);
         }
     }
 
